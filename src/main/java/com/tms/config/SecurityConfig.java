@@ -22,16 +22,16 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())  // Disable CSRF for simplicity
             .authorizeHttpRequests(auth -> auth
-                .antMatchers("/public/**", "/login", "/Register", "/registration").permitAll()
+                .antMatchers("/public/**", "/login", "/Register", "/registration", "/loginAccount").permitAll()
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
                 .loginPage("/login")                  // Custom login page
-                .loginProcessingUrl("/loginAccount")  // Login form posts here
-                .usernameParameter("userName")        // Username field in form
-                .passwordParameter("Password")        // Password field in form
-                .defaultSuccessUrl("/dashboard", true) // Redirect on success
-                .failureUrl("/login?error=true")     // Redirect on failure
+                .loginProcessingUrl("/loginAccount")  // POST from form
+                .usernameParameter("userName")        // Form field for username
+                .passwordParameter("Password")        // Form field for password
+                .defaultSuccessUrl("/dashboard", true) // Where to go after login
+                .failureUrl("/login?error=true")      // When login fails
             )
             .logout(logout -> logout
                 .logoutUrl("/Logout")
@@ -47,7 +47,7 @@ public class SecurityConfig {
             if ("ADMIN".equals(username)) {
                 return User.builder()
                         .username("ADMIN")
-                        .password(passwordEncoder().encode("1234")) // Hardcoded password
+                        .password(passwordEncoder().encode("ba123#"))
                         .roles("ADMIN")
                         .build();
             } else if ("user".equals(username)) {

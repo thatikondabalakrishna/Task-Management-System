@@ -28,8 +28,8 @@ public class LoginController {
 		return "Register"; 
 	}
 
-	@PostMapping("/loginAccount")
-	public String loginAccount(@RequestParam("userName") String userName,@RequestParam("Password") String Password,
+	//@PostMapping("/loginAccount")
+	/*public String loginAccount(@RequestParam("userName") String userName,@RequestParam("Password") String Password,
 			Model model) {
 		Users user=userrepo.findByUsernameAndPassword(userName, Password);
 		 if (user != null) {
@@ -39,7 +39,7 @@ public class LoginController {
 		        return "login"; // stay on login page
 		    }
 		
-	}
+	}*/
 	
 	@PostMapping("/Logout")
 	public String Logout() {
@@ -66,6 +66,11 @@ public class LoginController {
 	            model.addAttribute("error", "Error occured while registration");
 	       }
 		return "login"; 
+	}
+	
+	@GetMapping("/dashboard")
+	public String dashboardPage() {
+	    return "TaskManagement";
 	}
 
 	
