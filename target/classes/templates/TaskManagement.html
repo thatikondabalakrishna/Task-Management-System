@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Task List</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <style>
+    .task-card {
+      transition: transform 0.2s ease;
+    }
+    .task-card:hover {
+      transform: scale(1.02);
+    }
+  </style>
+
+  <!-- JS dependencies -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+  <script src="/js/TaskManagement.js"></script>
+</head>
+
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">TMS</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+      aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link active" href="#" id="viewAllTasks">View All Tasks</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#" id="addNewTaskLink">Add New Task</a>
+        </li>
+      </ul>
+      <form class="d-flex" th:action="@{/Logout}" method="post">
+        <button class="btn btn-outline-success" type="submit">Logout</button>
+      </form>
+    </div>
+  </div>
+</nav>
+
+<!-- Task Cards Container -->
+<!-- <div class="container mt-4" id="taskCardContainer">
+  JavaScript will inject task cards here
+</div> -->
+<div class="container my-4">
+  <div id="taskCardContainer" class="mb-4"></div>
+  <div id="paginationContainer"></div>
+</div>
+
+<!-- Edit Task Modal -->
+<div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="editTaskModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title" id="editTaskModalLabel"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <form id="UpdateTask" data-mode="create" onsubmit="CreateUpdateTask(event)">
+          <input type="hidden" id="editTaskId">
+
+          <div class="mb-3">
+            <label for="Id" class="form-label">Id No</label>
+            <input type="text" class="form-control" id="Id">
+          </div>
+
+          <div class="mb-3">
+            <label for="assignee" class="form-label">Assignee</label>
+            <input type="text" class="form-control" id="assignee">
+          </div>
+
+          <div class="mb-3">
+            <label for="name" class="form-label">Task Name</label>
+            <input type="text" class="form-control" id="name">
+          </div>
+
+          <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description"></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="duedate" class="form-label">Due Date</label>
+            <input type="date" class="form-control" id="duedate">
+          </div>
+
+          <div class="mb-3">
+            <label for="status" class="form-label">Status</label>
+            <select class="form-control" id="status">
+              <option value="Completed">Completed</option>
+              <option value="OverDue">Over Due</option>
+              <option value="Inprogress">In progress</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn bg-primary text-white" id="modalsubmit"></button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
