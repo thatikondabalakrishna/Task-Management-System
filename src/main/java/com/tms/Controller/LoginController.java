@@ -3,6 +3,7 @@ package com.tms.Controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.reactive.ClientHttpResponse;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +18,9 @@ public class LoginController {
 	
 	@Autowired
 	UserRepository userrepo;
+	
+	@Autowired
+	private PasswordEncoder passwordEncoder;
 	
 	@GetMapping("/login")
 	public String loginPage() {
@@ -49,7 +53,7 @@ public class LoginController {
 	
 	@PostMapping("/registration")
 	public String registration(@RequestParam("userName") String username,@RequestParam("Password") String Password,
-			Model model) {
+			@RequestParam("role") String role,Model model) {
 		
 		 if (userrepo.existsById(username)) {
 	            model.addAttribute("error", "Username already exists");
@@ -58,9 +62,9 @@ public class LoginController {
 		 
 		    Users newUser = new Users();
 	        newUser.setUserName(username);
-	        newUser.setPassword(Password); // NOTE: store encrypted password in real apps
+	        newUser.setPassword(passwordEncoder.encode(Password)); // NOTE: store encrypted password in real apps
+	        newUser.setRole(role);
 	       if(userrepo.save(newUser)!=null) {
-	        
 	        model.addAttribute("Status", "Successfully User Registered");
 	       }else {
 	            model.addAttribute("error", "Error occured while registration");

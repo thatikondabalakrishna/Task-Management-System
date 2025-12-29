@@ -2,9 +2,13 @@ package com.tms.Controller;
 
 
 import com.tms.modal.Task;
+import com.tms.modal.Users;
+import com.tms.repository.UserRepository;
 import com.tms.service.TaskService;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,10 +20,26 @@ public class TaskController {
 
     @Autowired
     private TaskService taskService;
+    
+    @Autowired
+    private UserRepository userRepo;
 
-    @GetMapping
+   /* @GetMapping
     public List<Task> getAllTasks() {
         return taskService.getAllTasks();
+    }*/
+    
+    @GetMapping
+    public List<Task> getTasks(Authentication authentication) {
+
+        UserDetails userDetails =
+                (UserDetails) authentication.getPrincipal();
+        String username = userDetails.getUsername();
+
+        Users loggedInUser = userRepo.findById(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return taskService.getTasksBasedOnRole(loggedInUser);
     }
     
     @PostMapping("/createTask")

@@ -4,18 +4,24 @@ package com.tms.modal;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+
+import org.springframework.security.core.userdetails.User;
 
 @Entity
 public class Task {
 
     @Id
     private int id;
-    private String assignee;
     private String name;
     private String description;
     private String duedate;
     private String status;
-
+    @ManyToOne
+    @JoinColumn(name = "assigned_user")
+    private Users assignedUser;
+  
     // Default constructor
     public Task() {}
 
@@ -35,16 +41,6 @@ public class Task {
     public void setId(int id) {
         this.id = id;
     }
-
-    public String getAssignee() {
-		return assignee;
-	}
-
-	public void setAssignee(String assignee) {
-		this.assignee = assignee;
-	}
-
-	
 
 	// Getter and Setter for name
     public String getName() {
@@ -79,6 +75,14 @@ public class Task {
 	public void setStatus(String status) {
 		this.status = status;
 	}
+
+	public Users getAssignedUser() {
+		return assignedUser;
+	}
+
+	public void setAssignedUser(Users assignedUser) {
+		this.assignedUser = assignedUser;
+	}
+
 	
-   
 }

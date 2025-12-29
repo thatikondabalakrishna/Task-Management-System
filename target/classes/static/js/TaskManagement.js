@@ -1,313 +1,325 @@
-document.addEventListener("DOMContentLoaded", function() {
-
-	fetchAllData();
-
-	const viewAllBtn = document.getElementById('viewAllTasks');
-	if (viewAllBtn) {
-		viewAllBtn.addEventListener('click', function(event) {
-			event.preventDefault(); // Only if it's a link
-			fetchAllData();         // Re-fetch the task list on demand
-		});
-	}
-
-	// Attach click handler
-	const addNewTaskLink = document.getElementById('addNewTaskLink');
-	if (addNewTaskLink) {
-		addNewTaskLink.addEventListener('click', function(event) {
-			event.preventDefault();
-			openTaskModal('create');
-		});
-	} else {
-		console.warn("Add New Task link not found.");
-	}
-});
-
-
-// Function to open the task modal
-function openTaskModal(mode, task = null) {
-	const modalLabel = document.getElementById('editTaskModalLabel');
-	const modalsubmit = document.getElementById('modalsubmit');
-	const updateForm = document.getElementById('UpdateTask');
-
-	const taskInput = document.getElementById('name');
-	const taskassignee = document.getElementById('assignee');
-	const taskIdInput = document.getElementById('Id');
-	const taskDescriptionInput = document.getElementById('description');
-	const taskduedate = document.getElementById('duedate');
-	const taskStatusInput = document.getElementById('status');
-
-	if (mode === 'create') {
-		modalLabel.innerText = 'Add New Task';
-		modalsubmit.innerText = 'Create Task';
-		updateForm.setAttribute('data-mode', 'create');
-		taskInput.value = ''; // Clear input for creating a new task
-		taskassignee.value = ''; 
-		taskIdInput.value = ''; // Clear task ID for new task
-		taskDescriptionInput.value = ''; // Clear description for new task
-		taskduedate.value = ''; 
-		taskStatusInput.value = 'false'; // Default status to "Not Completed"
-
-	} else if (mode === 'edit' && task) {
-		modalLabel.innerText = 'Edit Task';
-		modalsubmit.innerText = 'Update Task';
-		updateForm.setAttribute('data-mode', 'edit');
-		taskIdInput.value = task.id; 
-		taskIdInput.readOnly = true;
-		taskassignee.value = task.assignee; 
-		taskInput.value = task.name; 
-		taskDescriptionInput.value = task.description; 
-		taskduedate.value = task.duedate; 
-		taskStatusInput.value = task.status; 
-	}
-
-	// Show the modal (Bootstrap 5 way)
-	const taskModal = new bootstrap.Modal(document.getElementById('taskModal'));
-	taskModal.show();
-}
-
-
-
-
-async function CreateUpdateTask(event) {
-	event.preventDefault(); // Prevent default form submission
-
-	const updateForm = document.getElementById('UpdateTask');
-	if (!updateForm) {
-		console.warn('UpdateTask form not found in the DOM.');
-		return;
-	}
-
-	const mode = updateForm.getAttribute('data-mode');
-	const updatedTask = {
-		id: document.getElementById('Id').value,
-		assignee: document.getElementById('assignee').value,
-		name: document.getElementById('name').value,
-		description: document.getElementById('description').value,
-		duedate: document.getElementById('duedate').value,
-		status: document.getElementById('status').value
-	};
-
-	let url = '';
-	let method = '';
-
-	if (mode === 'create') {
-		url = '/api/tasks/createTask';
-		method = 'POST';
-	} else if (mode === 'edit') {
-		url = `/api/tasks/${updatedTask.id}`;
-		method = 'PUT';
-	} else {
-		console.error('Unknown form mode:', mode);
-		return;
-	}
-
-	try {
-		const response = await fetch(url, {
-			method: method,
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: mode === 'create' ? JSON.stringify([updatedTask]) : JSON.stringify(updatedTask)
-		});
-
-		const responseData = await response.json(); // <-- Always parse as JSON
-
-		if (response.ok) {
-			console.log("Server Response:", responseData); // Good to see the real server response
-			alert("Task updated successfully!");
-			const modal = bootstrap.Modal.getInstance(document.getElementById('taskModal'));
-			modal.hide();
-			location.reload();
-		} else {
-			console.error("Server responded with an error:", responseData);
-			alert("Failed to update task: " + (responseData.message || "Unknown error"));
-		}
-	} catch (error) {
-		console.error("Error during fetch:", error);
-		alert("Something went wrong while updating the task.");
-	}
-}
+/****************************
+ * GLOBAL VARIABLES
+ ****************************/
 const CARDS_PER_PAGE = 6;
 let allTasks = [];
+let filteredTasks = [];
 let currentPage = 1;
 
-function fetchAllData() {
-  fetch('/api/tasks')
-    .then(response => response.json())
-    .then(data => {
-      allTasks = data;
-      currentPage = 1;
-      renderTaskPage();
-      renderPagination();
-    })
-    .catch(error => {
-      console.error('Error fetching tasks:', error);
-    });
-}
+/****************************
+ * DOM READY
+ ****************************/
+document.addEventListener("DOMContentLoaded", function () {
 
-function renderTaskPage() {
-  const cardContainer = document.getElementById('taskCardContainer');
-  cardContainer.innerHTML = '';
+    fetchAllData();
 
-  const start = (currentPage - 1) * CARDS_PER_PAGE;
-  const end = start + CARDS_PER_PAGE;
-  const pageTasks = allTasks.slice(start, end);
-
-  const row = document.createElement('div');
-  row.className = 'row g-4';
-
-  if (pageTasks.length === 0) {
-    cardContainer.innerHTML = '<p class="text-center">No tasks available.</p>';
-    return;
-  }
-
-  pageTasks.forEach(task => {
-    const col = document.createElement('div');
-    col.className = 'col-md-6 col-lg-4';
-
-    const card = document.createElement('div');
-    card.className = 'card task-card h-100 shadow';
-
-    const cardBody = document.createElement('div');
-    cardBody.className = 'card-body';
-
-    const title = document.createElement('h5');
-    title.className = 'card-title';
-    title.textContent = task.name;
-
-    const assignee = document.createElement('h6');
-    assignee.className = 'card-subtitle mb-2 text-muted';
-    assignee.textContent = `Assigned to: ${task.assignee}`;
-
-    const description = document.createElement('p');
-    description.className = 'card-text';
-    description.textContent = task.description;
-
-    const duedate = document.createElement('p');
-    duedate.className = 'card-text';
-    duedate.innerHTML = `<strong>Due:</strong> ${task.duedate}`;
-
-    const status = document.createElement('span');
-    status.className = 'badge';
-    status.textContent = task.status;
-
-    if (task.status === 'Completed') {
-      status.classList.add('bg-success');
-    } else if (task.status === 'OverDue') {
-      status.classList.add('bg-danger');
-    } else {
-      status.classList.add('bg-warning', 'text-dark');
+    const viewAllBtn = document.getElementById('viewAllTasks');
+    if (viewAllBtn) {
+        viewAllBtn.addEventListener('click', function (event) {
+            event.preventDefault();
+            resetFilter();
+        });
     }
 
-    const editBtn = document.createElement('button');
-    editBtn.className = 'btn btn-sm btn-outline-primary me-2';
-    editBtn.innerHTML = '<i class="fas fa-edit"></i>';
-    editBtn.addEventListener('click', () => openTaskModal('edit', task));
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'btn btn-sm btn-outline-danger';
-    deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
-    deleteBtn.addEventListener('click', () => {
-      const confirmDelete = confirm(`Delete task: ${task.name}?`);
-      if (confirmDelete) {
-        fetch(`/api/tasks/${task.id}`, { method: 'DELETE' })
-          .then(response => {
-            if (response.ok) {
-              alert('Task deleted.');
-              fetchAllData(); // Refresh
-            } else {
-              alert('Failed to delete.');
-            }
-          });
-      }
-    });
-
-    const footer = document.createElement('div');
-    footer.className = 'mt-3 d-flex justify-content-between align-items-center';
-    footer.appendChild(status);
-    const btnGroup = document.createElement('div');
-    btnGroup.appendChild(editBtn);
-    btnGroup.appendChild(deleteBtn);
-    footer.appendChild(btnGroup);
-
-    cardBody.appendChild(title);
-    cardBody.appendChild(assignee);
-    cardBody.appendChild(description);
-    cardBody.appendChild(duedate);
-    cardBody.appendChild(footer);
-    card.appendChild(cardBody);
-    col.appendChild(card);
-    row.appendChild(col);
-  });
-
-  cardContainer.appendChild(row);
-}
-function renderPagination() {
-  const totalPages = Math.ceil(allTasks.length / CARDS_PER_PAGE);
-  const paginationContainer = document.getElementById('paginationContainer');
-  paginationContainer.innerHTML = '';
-
-  if (totalPages <= 1) return; // No need for pagination
-
-  const nav = document.createElement('nav');
-  const ul = document.createElement('ul');
-  ul.className = 'pagination justify-content-center';
-
-  // Prev button
-  const prevLi = document.createElement('li');
-  prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
-  const prevLink = document.createElement('a');
-  prevLink.className = 'page-link';
-  prevLink.textContent = 'Previous';
-  prevLink.href = '#';
-  prevLink.onclick = (e) => {
-    e.preventDefault();
-    if (currentPage > 1) {
-      currentPage--;
-      renderTaskPage();
-      renderPagination();
+    const addNewTaskLink = document.getElementById('addNewTaskLink');
+    if (addNewTaskLink) {
+        addNewTaskLink.addEventListener('click', function (event) {
+            event.preventDefault();
+            openTaskModal('create');
+        });
     }
-  };
-  prevLi.appendChild(prevLink);
-  ul.appendChild(prevLi);
 
-  // Page numbers
-  for (let i = 1; i <= totalPages; i++) {
-    const pageLi = document.createElement('li');
-    pageLi.className = `page-item ${i === currentPage ? 'active' : ''}`;
-    const pageLink = document.createElement('a');
-    pageLink.className = 'page-link';
-    pageLink.href = '#';
-    pageLink.textContent = i;
-    pageLink.onclick = (e) => {
-      e.preventDefault();
-      currentPage = i;
-      renderTaskPage();
-      renderPagination();
+    const statusDropdown = document.getElementById('statusFilter');
+    if (statusDropdown) {
+        statusDropdown.addEventListener('change', function () {
+            filterByStatus(this.value);
+        });
+    }
+});
+
+/****************************
+ * OPEN MODAL (CREATE / EDIT)
+ ****************************/
+function openTaskModal(mode, task = null) {
+
+    const modal = document.getElementById('taskModal');
+    const modalLabel = document.getElementById('editTaskModalLabel');
+    const modalsubmit = document.getElementById('modalsubmit');
+    const updateForm = document.getElementById('UpdateTask');
+
+    const taskIdInput = document.getElementById('Id');
+    const taskName = document.getElementById('name');
+    const taskDesc = document.getElementById('description');
+    const taskDue = document.getElementById('duedate');
+    const taskStatus = document.getElementById('status');
+    const taskAssignee = document.getElementById('assignee');
+
+    taskIdInput.readOnly = false;
+    modalsubmit.disabled = false;
+
+    if (mode === 'create') {
+
+        modalLabel.innerText = 'Add New Task';
+        modalsubmit.innerText = 'Create Task';
+        modalsubmit.className = 'btn btn-primary';
+
+        updateForm.setAttribute('data-mode', 'create');
+
+        taskIdInput.value = '';
+        taskName.value = '';
+        taskDesc.value = '';
+        taskDue.value = '';
+        taskStatus.value = 'PENDING';
+        taskAssignee.value = '';
+
+    } else if (mode === 'edit' && task) {
+
+        modalLabel.innerText = 'Edit Task Details';
+        modalsubmit.innerText = 'Update Task';
+        modalsubmit.className = 'btn btn-warning';
+
+        updateForm.setAttribute('data-mode', 'edit');
+
+        taskIdInput.value = task.id;
+        taskIdInput.readOnly = true;
+
+        taskName.value = task.name;
+        taskDesc.value = task.description;
+        taskDue.value = task.duedate;
+        taskStatus.value = task.status;
+        taskAssignee.value = task.assignedUser?.userName || '';
+
+        modalsubmit.disabled = true;
+
+        ['name', 'description', 'duedate', 'status', 'assignee'].forEach(id => {
+            document.getElementById(id).oninput = () => {
+                modalsubmit.disabled = false;
+            };
+        });
+
+        setTimeout(() => taskName.focus(), 300);
+    }
+
+    new bootstrap.Modal(modal).show();
+}
+
+/****************************
+ * CREATE / UPDATE TASK
+ ****************************/
+async function CreateUpdateTask(event) {
+    event.preventDefault();
+
+    const updateForm = document.getElementById('UpdateTask');
+    const mode = updateForm.getAttribute('data-mode');
+
+    const taskPayload = {
+        id: document.getElementById('Id').value || null,
+        name: document.getElementById('name').value,
+        description: document.getElementById('description').value,
+        duedate: document.getElementById('duedate').value,
+        status: document.getElementById('status').value,
+        assignedUser: {
+            userName: document.getElementById('assignee').value
+        }
     };
-    pageLi.appendChild(pageLink);
-    ul.appendChild(pageLi);
-  }
 
-  // Next button
-  const nextLi = document.createElement('li');
-  nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
-  const nextLink = document.createElement('a');
-  nextLink.className = 'page-link';
-  nextLink.textContent = 'Next';
-  nextLink.href = '#';
-  nextLink.onclick = (e) => {
-    e.preventDefault();
-    if (currentPage < totalPages) {
-      currentPage++;
-      renderTaskPage();
-      renderPagination();
+    let url = '/api/tasks';
+    let method = 'POST';
+
+    if (mode === 'edit') {
+        url = `/api/tasks/${taskPayload.id}`;
+        method = 'PUT';
     }
-  };
-  nextLi.appendChild(nextLink);
-  ul.appendChild(nextLi);
 
-  nav.appendChild(ul);
-  paginationContainer.appendChild(nav);
+    try {
+        const response = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(taskPayload)
+        });
+
+        if (response.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('taskModal')).hide();
+            fetchAllData();
+        } else {
+            alert('Operation failed');
+        }
+
+    } catch (error) {
+        console.error(error);
+        alert('Server error occurred');
+    }
 }
 
+/****************************
+ * FETCH TASKS
+ ****************************/
+function fetchAllData() {
+    fetch('/api/tasks')
+        .then(res => res.json())
+        .then(data => {
+            allTasks = data;
+            filteredTasks = allTasks;   // 👈 IMPORTANT
+            currentPage = 1;
+            renderTaskPage();
+            renderPagination();
+        })
+        .catch(err => console.error(err));
+}
+
+/****************************
+ * STATUS FILTER (CLIENT SIDE)
+ ****************************/
+function filterByStatus(status) {
+
+    if (status === 'ALL') {
+        filteredTasks = allTasks;
+    } else {
+        filteredTasks = allTasks.filter(task => task.status === status);
+    }
+
+    currentPage = 1;
+    renderTaskPage();
+    renderPagination();
+}
+
+function resetFilter() {
+    const dropdown = document.getElementById('statusFilter');
+    if (dropdown) dropdown.value = 'ALL';
+
+    filteredTasks = allTasks;
+    currentPage = 1;
+    renderTaskPage();
+    renderPagination();
+}
+
+/****************************
+ * RENDER TASK CARDS
+ ****************************/
+function renderTaskPage() {
+
+    const cardContainer = document.getElementById('taskCardContainer');
+    cardContainer.innerHTML = '';
+
+    const start = (currentPage - 1) * CARDS_PER_PAGE;
+    const pageTasks = filteredTasks.slice(start, start + CARDS_PER_PAGE);
+
+    if (!pageTasks.length) {
+        cardContainer.innerHTML = '<p class="text-center">No tasks found</p>';
+        return;
+    }
+
+    const row = document.createElement('div');
+    row.className = 'row g-4';
+
+    pageTasks.forEach(task => {
+
+        const col = document.createElement('div');
+        col.className = 'col-md-6 col-lg-4';
+
+        const card = document.createElement('div');
+        card.className = 'card h-100 shadow task-card';
+
+        const body = document.createElement('div');
+        body.className = 'card-body';
+
+        body.innerHTML = `
+            <h5>${task.name}</h5>
+            <h6 class="text-muted">Assigned to: ${task.assignedUser?.userName || 'Unassigned'}</h6>
+            <p>${task.description}</p>
+            <p><strong>Due:</strong> ${task.duedate}</p>
+            <span class="badge ${
+                task.status === 'COMPLETED'
+                    ? 'bg-success'
+                    : task.status === 'OVERDUE'
+                        ? 'bg-danger'
+                        : 'bg-warning text-dark'
+            }">${task.status}</span>
+        `;
+
+        const footer = document.createElement('div');
+        footer.className = 'mt-3 d-flex justify-content-end';
+
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn btn-sm btn-outline-primary me-2';
+        editBtn.innerText = 'Edit';
+        editBtn.onclick = () => {
+            highlightSelectedCard(card);
+            openTaskModal('edit', task);
+        };
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn btn-sm btn-outline-danger';
+        deleteBtn.innerText = 'Delete';
+        deleteBtn.onclick = () => deleteTask(task.id);
+
+        footer.append(editBtn, deleteBtn);
+        body.appendChild(footer);
+
+        card.appendChild(body);
+        col.appendChild(card);
+        row.appendChild(col);
+    });
+
+    cardContainer.appendChild(row);
+}
+
+/****************************
+ * CARD HIGHLIGHT
+ ****************************/
+function highlightSelectedCard(card) {
+    document.querySelectorAll('.task-selected')
+        .forEach(c => c.classList.remove('task-selected'));
+
+    card.classList.add('task-selected');
+
+    setTimeout(() => {
+        card.classList.remove('task-selected');
+    }, 1500);
+}
+
+/****************************
+ * DELETE TASK
+ ****************************/
+function deleteTask(id) {
+    if (!confirm('Delete this task?')) return;
+
+    fetch(`/api/tasks/${id}`, { method: 'DELETE' })
+        .then(res => res.ok ? fetchAllData() : alert('Delete failed'));
+}
+
+/****************************
+ * PAGINATION
+ ****************************/
+function renderPagination() {
+
+    const totalPages = Math.ceil(filteredTasks.length / CARDS_PER_PAGE);
+    const container = document.getElementById('paginationContainer');
+    container.innerHTML = '';
+
+    if (totalPages <= 1) return;
+
+    const ul = document.createElement('ul');
+    ul.className = 'pagination justify-content-center';
+
+    for (let i = 1; i <= totalPages; i++) {
+        const li = document.createElement('li');
+        li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+
+        const a = document.createElement('a');
+        a.className = 'page-link';
+        a.href = '#';
+        a.textContent = i;
+        a.onclick = e => {
+            e.preventDefault();
+            currentPage = i;
+            renderTaskPage();
+            renderPagination();
+        };
+
+        li.appendChild(a);
+        ul.appendChild(li);
+    }
+
+    container.appendChild(ul);
+}

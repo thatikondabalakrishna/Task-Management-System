@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Task List</title>
+  <title>Task Management System</title>
 
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -11,105 +11,187 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <style>
+    /* Card hover */
     .task-card {
       transition: transform 0.2s ease;
     }
     .task-card:hover {
       transform: scale(1.02);
     }
+
+    /* Selected card highlight */
+    .task-selected {
+      border: 2px solid #0d6efd;
+      box-shadow: 0 0 18px rgba(13,110,253,0.4);
+      transform: scale(1.03);
+      transition: all 0.3s ease;
+    }
+
+    /* Modal animation */
+    .modal.fade .modal-dialog {
+      transform: scale(0.9);
+      transition: transform 0.3s ease-out;
+    }
+    .modal.show .modal-dialog {
+      transform: scale(1);
+    }
+
+    /* Read-only ID styling */
+    #Id {
+      background-color: #f1f3f5;
+      cursor: not-allowed;
+    }
   </style>
 
-  <!-- JS dependencies -->
+  <!-- JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+
+  <!-- Your existing JS -->
   <script src="/js/TaskManagement.js"></script>
 </head>
 
 <body>
 
-<!-- Navbar -->
+<!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <div class="container-fluid">
-    <a class="navbar-brand" href="#">TMS</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
-      aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <a class="navbar-brand fw-bold" href="#" id="viewAllTasks">TMS</a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+            data-bs-target="#navbarSupportedContent">
       <span class="navbar-toggler-icon"></span>
     </button>
 
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+       <!--  <li class="nav-item">
+          <a class="nav-link active" href="#" id="viewAllTasks">
+            <i class="fa-solid fa-list"></i> View All Tasks
+          </a>
+        </li> -->
         <li class="nav-item">
-          <a class="nav-link active" href="#" id="viewAllTasks">View All Tasks</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#" id="addNewTaskLink">Add New Task</a>
+          <a class="nav-link" href="#" id="addNewTaskLink">
+            <i class="fa-solid fa-plus"></i> Add New Task
+          </a>
         </li>
       </ul>
+
       <form class="d-flex" th:action="@{/Logout}" method="post">
-        <button class="btn btn-outline-success" type="submit">Logout</button>
+        <button class="btn btn-outline-success" type="submit">
+          <i class="fa-solid fa-right-from-bracket"></i> Logout
+        </button>
       </form>
     </div>
   </div>
 </nav>
 
-<!-- Task Cards Container -->
-<!-- <div class="container mt-4" id="taskCardContainer">
-  JavaScript will inject task cards here
-</div> -->
+<!-- STATUS FILTER -->
+<div class="container my-3">
+  <div class="row justify-content-end">
+    <div class="col-md-3">
+      <select class="form-select" id="statusFilter">
+        <option value="ALL">All Status</option>
+        <option value="PENDING">Pending</option>
+        <option value="IN_PROGRESS">In Progress</option>
+        <option value="COMPLETED">Completed</option>
+        <option value="OVERDUE">Overdue</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+
+<!-- MAIN CONTENT -->
 <div class="container my-4">
   <div id="taskCardContainer" class="mb-4"></div>
   <div id="paginationContainer"></div>
 </div>
 
-<!-- Edit Task Modal -->
-<div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="editTaskModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
+<!-- TASK MODAL -->
+<div class="modal fade" id="taskModal" tabindex="-1"
+     aria-labelledby="editTaskModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
 
+      <!-- HEADER -->
       <div class="modal-header">
-        <h5 class="modal-title" id="editTaskModalLabel"></h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <h5 class="modal-title" id="editTaskModalLabel">
+          Add / Edit Task
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
 
+      <!-- BODY -->
       <div class="modal-body">
-        <form id="UpdateTask" data-mode="create" onsubmit="CreateUpdateTask(event)">
-          <input type="hidden" id="editTaskId">
+        <form id="UpdateTask" onsubmit="CreateUpdateTask(event)">
 
-          <div class="mb-3">
-            <label for="Id" class="form-label">Id No</label>
-            <input type="text" class="form-control" id="Id">
+          <div class="row g-3">
+
+            <!-- LEFT COLUMN -->
+            <div class="col-md-6">
+
+              <div class="mb-3">
+                <label class="form-label">Task ID</label>
+                <input type="text" class="form-control" id="Id">
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Task Name</label>
+                <input type="text" class="form-control" id="name" required>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" id="description" rows="3"></textarea>
+              </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN -->
+            <div class="col-md-6">
+
+              <div class="mb-3">
+                <label class="form-label">
+                  <i class="fa-solid fa-calendar"></i> Due Date
+                </label>
+                <input type="date" class="form-control" id="duedate" required>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">
+                  <i class="fa-solid fa-flag"></i> Status
+                </label>
+                <select class="form-select" id="status">
+                  <option value="PENDING">Pending</option>
+                  <option value="IN_PROGRESS">In Progress</option>
+                  <option value="COMPLETED">Completed</option>
+                  <option value="OVERDUE">Overdue</option>
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">
+                  <i class="fa-solid fa-user"></i> Assignee
+                </label>
+                <input type="text" class="form-control" id="assignee"
+                       placeholder="Username">
+              </div>
+
+            </div>
           </div>
 
-          <div class="mb-3">
-            <label for="assignee" class="form-label">Assignee</label>
-            <input type="text" class="form-control" id="assignee">
+          <!-- FOOTER -->
+          <div class="modal-footer mt-3">
+            <button type="button" class="btn btn-secondary"
+                    data-bs-dismiss="modal">
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-primary" id="modalsubmit">
+              Save Task
+            </button>
           </div>
 
-          <div class="mb-3">
-            <label for="name" class="form-label">Task Name</label>
-            <input type="text" class="form-control" id="name">
-          </div>
-
-          <div class="mb-3">
-            <label for="description" class="form-label">Description</label>
-            <textarea class="form-control" id="description"></textarea>
-          </div>
-
-          <div class="mb-3">
-            <label for="duedate" class="form-label">Due Date</label>
-            <input type="date" class="form-control" id="duedate">
-          </div>
-
-          <div class="mb-3">
-            <label for="status" class="form-label">Status</label>
-            <select class="form-control" id="status">
-              <option value="Completed">Completed</option>
-              <option value="OverDue">Over Due</option>
-              <option value="Inprogress">In progress</option>
-            </select>
-          </div>
-
-          <button type="submit" class="btn bg-primary text-white" id="modalsubmit"></button>
         </form>
       </div>
 

@@ -9,6 +9,6 @@ import com.tms.modal.Users;
 public interface UserRepository extends JpaRepository<Users, String> {
 
 	Users findByUsernameAndPassword(String username, String password);
-	  Optional<Users> findByUsername(String username);
+	Users findByUsername(String username);
 
 }
